@@ -1,4 +1,13 @@
+/**
+ * The prime used as the power in the hashing functions
+ * @type {number}
+ */
 const PowerPrime = 31
+
+/**
+ * The prime used as the modulo in the hashing functions
+ * @type {number}
+ */
 const ModuloPrime = 201326611
 
 /**
@@ -92,29 +101,76 @@ class HashMap {
      * @private
      */
     _table = Array(16);
+
+    /**
+     * The number of keys stored in the map
+     * @type {number}
+     * @private
+     */
     _size = 0;
+
+    /**
+     * The hashing function
+     * @type {function}
+     * @private
+     */
     _hashingFunc = hash
 
+    /**
+     * The primary constructor
+     * @param hashingFunc the hashing function to use, defaults to hash
+     */
     constructor(hashingFunc) {
         this._hashingFunc = hashingFunc ? hashingFunc : hash
     }
 
-    get _capacity() {
+    /**
+     * The number of keys stored in the map
+     * @returns {number}
+     */
+    get length() {
+        return this._size;
+    }
+
+    /**
+     * The size of the table
+     * @returns {number}
+     */
+    get capacity() {
         return this._table.length;
     };
 
+    /**
+     * The load factor (length / capacity)
+     * @returns {number}
+     */
     get loadFactor() {
-        return this._size / this._capacity;
+        return this._size / this.capacity;
     }
 
+    /**
+     * Internal hash to table entry function
+     * @param x the hash
+     * @returns {number} the table entry
+     * @private
+     */
     _h(x) {
-        return Math.floor(Math.abs(this._hashingFunc(x))) & (this._capacity - 1);
+        return Math.floor(Math.abs(this._hashingFunc(x))) & (this.capacity - 1);
     }
 
+    /**
+     * Returns the next load factor on insertion
+     * @returns {number}
+     * @private
+     */
     _nextLoadFactor() {
-        return (this._size + 1) / this._capacity;
+        return (this._size + 1) / this.capacity;
     }
 
+    /**
+     * Creates a bigger table and inserts the previous keys into it
+     * @private
+     */
     _rehash() {
         let old = this._table
 
@@ -127,18 +183,29 @@ class HashMap {
         }
     }
 
+    /**
+     * Looks up the key and returns the index if found else index to an empty entry
+     * @param key the key
+     * @returns {number} the index in the table
+     * @private
+     */
     _lookup(key) {
         const hash = this._h(key);
         let x = 1;
         let index = hash;
 
         while (this._table[index] && this._hashingFunc(this._table[index].key) !== this._hashingFunc(key)) {
-            index = (hash + x) % this._capacity;
+            index = (hash + x) % this.capacity;
             x++;
         }
         return index;
     }
 
+    /**
+     * Inserts the key and value pair into the map
+     * @param key the key
+     * @param value the value
+     */
     insert(key, value) {
         if (this._nextLoadFactor() >= 1) {
             this._rehash()
@@ -154,7 +221,7 @@ class HashMap {
                 key = temp.key
                 value = temp.value
             }
-            index = (hash + x) % this._capacity;
+            index = (hash + x) % this.capacity;
             x++;
         }
 
@@ -164,14 +231,23 @@ class HashMap {
         this._table[index] = {key, value};
     }
 
+    /**
+     * Retrieves a value from the map
+     * @param key the key
+     * @returns {*} the value if found, else null
+     */
     get(key) {
         const index = this._lookup(key);
 
         return this._table[index] ? this._table[index].value : null
     }
 
+    /**
+     * Removes a key from the map
+     * @param key the key
+     */
     remove(key) {
-
+        //TODO
     }
 
 }

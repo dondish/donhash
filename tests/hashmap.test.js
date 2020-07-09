@@ -8,11 +8,11 @@ describe('HashMap Tests', function () {
         expect(map.get('Test')).toBe(null);
         map.insert('Test', 'Value')
         expect(map.get('Test')).toBe('Value')
-        expect(map._capacity).toBe(16)
+        expect(map.capacity).toBe(16)
         expect(map._size).toBe(1)
         map.insert('Test', 'Value2')
         expect(map.get('Test')).toBe('Value2')
-        expect(map._capacity).toBe(16)
+        expect(map.capacity).toBe(16)
         expect(map._size).toBe(1)
         map.insert('Test2', 'Value3')
         expect(map.get('Test')).toBe('Value2')
@@ -23,6 +23,13 @@ describe('HashMap Tests', function () {
         }
         expect(map.get('Test')).toBe('Value2')
         expect(map.get('Test2')).toBe('Value3')
-        expect(map._capacity).toBe(32)
+        expect(map.capacity).toBe(32)
     })
+    it('should resolve collisions', function () {
+        const map = new HashMap()
+        map.insert(0, 5);
+        map.insert(16, 6);
+        expect(map.get(0)).toBe(5);
+        expect(map.get(16)).toBe(6);
+    });
 });

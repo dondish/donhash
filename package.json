@@ -1,6 +1,6 @@
 {
   "name": "donhash",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A hashing / HashMap implementation, works with any project without modifying the prototype.",
   "main": "index.js",
   "scripts": {

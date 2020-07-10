@@ -118,7 +118,7 @@ class HashMap {
 
     /**
      * The primary constructor
-     * @param {{hashingFunc: function?, initialTableSize: number? }?} options the options to pass
+     * @param {{hashingFunc((): number)?, initialTableSize: number? }?} options the options to pass
      */
     constructor(options) {
         this._hashingFunc = options ? (options.hashingFunc || hash) : hash
@@ -294,6 +294,33 @@ class HashMap {
             entry = this._table[index];
         }
         this._table[index ? (index - 1) : (this.capacity - 1)] = entry;
+    }
+
+    /**
+     * Creates a new iterator
+     * @returns {{next(): ({value: *, done: boolean}), i: number, table: (*[]|null)[]}} the iterator
+     */
+    [Symbol.iterator]() {
+        return {
+            i: 0,
+            table: this._table,
+            next() {
+                while (!this.table[this.i] && this.i < this.table.length) {
+                    this.i++;
+                }
+                if (this.i === this.table.length) {
+                    return {
+                        value: undefined,
+                        done: true
+                    }
+                }
+                let entry = this.table[this.i++]
+                return {
+                    value: entry.slice(0, 2),
+                    done: false
+                }
+            }
+        }
     }
 
 }

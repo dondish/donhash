@@ -73,4 +73,18 @@ describe('HashMap Tests', function () {
         expect(map.get(0)).toBe('Doup');
         expect(map.get(1)).toBe('Deep');
     });
+
+    it('Iterator tests', function () {
+        const map = new HashMap();
+        map.insert(0, 'Doup');
+        map.insert(1, 'Deep');
+        const arr = [];
+        for (let x of map) {
+            arr.push(x);
+        }
+        expect(arr[0][0]).toBe(0);
+        expect(arr[0][1]).toBe('Doup');
+        expect(arr[1][0]).toBe(1);
+        expect(arr[1][1]).toBe('Deep');
+    })
 });

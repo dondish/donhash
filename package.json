@@ -4,12 +4,14 @@
   "description": "A hashing / HashMap implementation, works with any project without modifying the prototype.",
   "main": "index.js",
   "scripts": {
-    "test": "jest --config=jest.config.js"
+    "test": "jest --config=jest.config.js",
+    "benchmark": "node tests/hashmap.benchmark.js"
   },
   "keywords": [],
   "author": "Oded Shapira <odedshapira1@protonmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "jest": "^26.1.0"
+    "jest": "^26.1.0",
+    "random-js": "^2.1.0"
   }
 }

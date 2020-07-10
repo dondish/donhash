@@ -23,7 +23,7 @@ function stringHash(str) {
         h = (h + str.charCodeAt(c) * power) % m
         power = (power * PowerPrime) % m
     }
-    return h
+    return Math.floor(Math.abs(h))
 }
 
 /**
@@ -37,7 +37,7 @@ function hash(object) {
             return object ? 1 : 0
         case "number":
         case "bigint":
-            return object % ModuloPrime
+            return Math.floor(Math.abs(object)) % ModuloPrime
         case "symbol":
         case "string":
             return stringHash(object)
@@ -62,7 +62,7 @@ function hash(object) {
                 }
                 power = (power * PowerPrime) % m
             }
-            return h
+            return Math.floor(Math.abs(h))
         case "function":
             return stringHash(object.toString())
     }
@@ -82,7 +82,7 @@ function deepHash(object) {
             h = (h + deepHash(value) * power) % m
             power = (power * PowerPrime) % m
         }
-        return h
+        return Math.floor(Math.abs(h))
     }
     return hash(object)
 }
@@ -97,10 +97,10 @@ function deepHash(object) {
 class HashMap {
     /**
      * The hash table
-     * @type {({key: {any}, value: {any}} | null)[]}
+     * @type {(any[] | null)[]}
      * @private
      */
-    _table = Array(16);
+    _table;
 
     /**
      * The number of keys stored in the map
@@ -118,10 +118,24 @@ class HashMap {
 
     /**
      * The primary constructor
-     * @param hashingFunc the hashing function to use, defaults to hash
+     * @param {{hashingFunc: function?, initialTableSize: number? }?} options the options to pass
      */
-    constructor(hashingFunc) {
-        this._hashingFunc = hashingFunc ? hashingFunc : hash
+    constructor(options) {
+        this._hashingFunc = options ? (options.hashingFunc || hash) : hash
+        this._table = Array(options ? (this._roundToNearestPowerOfTwo(options.initialTableSize || 16)) : 16)
+    }
+
+    /**
+     * Rounds the given number to the nearest power of two larger than the number.
+     * @param x the number
+     * @returns {number} the smallest power of two larger or equal to the number
+     * @private
+     */
+    _roundToNearestPowerOfTwo(x) {
+        let i;
+        for (i = 1; i < x; i <<= 1) {
+        }
+        return i;
     }
 
     /**
@@ -155,7 +169,7 @@ class HashMap {
      * @private
      */
     _h(x) {
-        return Math.floor(Math.abs(this._hashingFunc(x))) & (this.capacity - 1);
+        return this._hashingFunc(x) & (this.capacity - 1);
     }
 
     /**
@@ -178,27 +192,45 @@ class HashMap {
         this._table = Array(this._table.length * 2);
         for (const v of old) {
             if (v) {
-                this.insert(v.key, v.value);
+                this.insert(v[0], v[1]);
             }
         }
     }
 
     /**
-     * Looks up the key and returns the index if found else index to an empty entry
+     * Looks up the key using linear probing and returns the index if found. Else, an index to an empty entry.
      * @param key the key
      * @returns {number} the index in the table
      * @private
      */
     _lookup(key) {
         const hash = this._h(key);
+        const keyHash = this._hashingFunc(key);
         let x = 1;
         let index = hash;
 
-        while (this._table[index] && this._hashingFunc(this._table[index].key) !== this._hashingFunc(key)) {
+        while (this._table[index] && this._table[index][2] !== keyHash) {
+            if (this._dib(this._table[index][2] & (this.capacity - 1), index) < this._dib(keyHash & (this.capacity - 1), index)) {
+                break;
+            }
             index = (hash + x) % this.capacity;
             x++;
         }
         return index;
+    }
+
+    /**
+     * The distance between the bucket where an entry is stored and its initial bucket
+     * @param {number} keyHash the entry's
+     * @param {number} index
+     * @returns {number} the DIB
+     * @private
+     */
+    _dib(keyHash, index) {
+        if (keyHash > index) {
+            index += this.capacity
+        }
+        return index - keyHash
     }
 
     /**
@@ -211,15 +243,17 @@ class HashMap {
             this._rehash()
         }
         const hash = this._h(key);
+        let keyHash = this._hashingFunc(key);
         let x = 1;
         let index = hash;
 
-        while (this._table[index] && this._hashingFunc(this._table[index].key) !== this._hashingFunc(key)) {
-            if (this._h(this._table[index].key) < this._h(key)) {
+        while (this._table[index] && this._table[index][2] !== keyHash) {
+            if (this._dib(this._table[index][2] & (this.capacity - 1), index) < this._dib(keyHash & (this.capacity - 1), index)) {
                 const temp = this._table[index];
-                this._table[index] = {key, value};
-                key = temp.key
-                value = temp.value
+                this._table[index] = [key, value, keyHash];
+                key = temp[0]
+                value = temp[1]
+                keyHash = temp[2]
             }
             index = (hash + x) % this.capacity;
             x++;
@@ -228,7 +262,7 @@ class HashMap {
         if (!this._table[index]) {
             this._size++;
         }
-        this._table[index] = {key, value};
+        this._table[index] = [key, value, keyHash];
     }
 
     /**
@@ -239,7 +273,7 @@ class HashMap {
     get(key) {
         const index = this._lookup(key);
 
-        return this._table[index] ? this._table[index].value : null
+        return (this._table[index] && this._table[index][2] === this._hashingFunc(key)) ? this._table[index][1] : null
     }
 
     /**
@@ -247,11 +281,21 @@ class HashMap {
      * @param key the key
      */
     remove(key) {
-        //TODO
+        let index = this._lookup(key);
+        index = (index + 1) % this.capacity;
+        let entry = this._table[index];
+
+        while (entry && this._dib(entry[2] & (this.capacity - 1), index)) {
+            this._table[index ? (index - 1) : (this.capacity - 1)] = entry;
+            index = (index + 1) % this.capacity;
+            entry = this._table[index];
+        }
+        this._table[index ? (index - 1) : (this.capacity - 1)] = entry;
     }
 
 }
 
+module.exports.stringHash = stringHash
 module.exports.hash = hash
 module.exports.deepHash = deepHash
 module.exports.HashMap = HashMap

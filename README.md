@@ -1,6 +1,16 @@
 # Dondish's HashMap
 Hashmap and hashing implementation in JavaScript.
 
+## Installation
+NPM:
+```
+npm i donhash
+```
+Yarn:
+```
+yarn add donhash
+```
+
 ## HashMap Implementation
 Open-Addressing with linear probing and Robin Hood Bucket Stealing.
 

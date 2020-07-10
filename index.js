@@ -282,6 +282,9 @@ class HashMap {
      */
     remove(key) {
         let index = this._lookup(key);
+        if (!this._table[index] || this._table[index][2] !== this._hashingFunc(key)) {
+            return;
+        }
         index = (index + 1) % this.capacity;
         let entry = this._table[index];
 

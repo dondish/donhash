@@ -61,6 +61,16 @@ describe('HashMap Tests', function () {
         map.remove(0);
         expect(map.get(0)).toBe(null);
         expect(map.get(16)).toBe('Doo');
+    });
 
+    it('should not remove a non existing item from the hashmap', function () {
+        const map = new HashMap();
+        map.insert(0, 'Doup');
+        map.insert(1, 'Deep');
+        expect(map.get(0)).toBe('Doup');
+        expect(map.get(1)).toBe('Deep');
+        map.remove(16);
+        expect(map.get(0)).toBe('Doup');
+        expect(map.get(1)).toBe('Deep');
     });
 });
